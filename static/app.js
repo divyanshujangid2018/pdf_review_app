@@ -195,17 +195,31 @@ function renderDoc(doc, target = panels) {
     body.classList.add('spreadsheet-body');
     body.style.setProperty('--sheet-zoom', '1');
     const sheetZoom = document.createElement('span'); sheetZoom.className = 'zoom-label'; sheetZoom.textContent = '100%'; sheetZoom.title = 'Reset zoom';
-    const setSheetZoom = (amount) => {
-      const value = Math.max(25, Math.min(200, Number(sheetZoom.textContent.slice(0, -1)) + amount));
+    const setSheetZoom = (amount, anchor = null) => {
+      const current = Number(sheetZoom.textContent.slice(0, -1));
+      const value = Math.max(25, Math.min(200, current + amount));
+      if (value === current) return;
+      // Keep whatever content point is under the anchor (cursor for a wheel
+      // zoom, viewport center for the +/- buttons) fixed on screen, instead
+      // of leaving scrollTop/scrollLeft as raw pixels while the content
+      // grows or shrinks underneath -- that's what made zooming drift
+      // toward the top.
+      const rect = body.getBoundingClientRect();
+      const originX = anchor ? anchor.x - rect.left : body.clientWidth / 2;
+      const originY = anchor ? anchor.y - rect.top : body.clientHeight / 2;
+      const ratioX = (body.scrollLeft + originX) / body.scrollWidth;
+      const ratioY = (body.scrollTop + originY) / body.scrollHeight;
       sheetZoom.textContent = `${value}%`;
       body.style.setProperty('--sheet-zoom', String(value / 100));
       body.classList.toggle('zoomed', value > 100);
+      body.scrollLeft = ratioX * body.scrollWidth - originX;
+      body.scrollTop = ratioY * body.scrollHeight - originY;
     };
-    sheetZoom.addEventListener('click', () => { sheetZoom.textContent = '100%'; body.style.setProperty('--sheet-zoom', '1'); body.classList.remove('zoomed'); });
+    sheetZoom.addEventListener('click', () => { sheetZoom.textContent = '100%'; body.style.setProperty('--sheet-zoom', '1'); body.classList.remove('zoomed'); body.scrollTop = 0; body.scrollLeft = 0; });
     body.addEventListener('wheel', event => {
       if (!event.ctrlKey && !event.metaKey) return;
       event.preventDefault();
-      setSheetZoom(event.deltaY < 0 ? 4 : -4);
+      setSheetZoom(event.deltaY < 0 ? 4 : -4, { x: event.clientX, y: event.clientY });
     }, { passive: false });
     enableExpandOnDoubleClick(body, panel);
     // No drag-to-pan here: CSV/XLSX cells are real, copyable text, and a
@@ -223,23 +237,35 @@ function renderDoc(doc, target = panels) {
     image.src = `/api/documents/${doc.id}/pages/${pageNumber}`;
     body.append(image); pageImages.push(image);
   }
-  const setZoom = (amount) => {
-    const value = Math.max(75, Math.min(250, Number(zoom.textContent.slice(0, -1)) + amount));
+  const setZoom = (amount, anchor = null) => {
+    const current = Number(zoom.textContent.slice(0, -1));
+    const value = Math.max(75, Math.min(250, current + amount));
+    if (value === current) return;
+    // Keep whatever content point is under the anchor (cursor for a wheel
+    // zoom, viewport center for the +/- buttons) fixed on screen, instead of
+    // leaving scrollTop/scrollLeft as raw pixels while the pages grow or
+    // shrink underneath -- that's what made zooming drift toward the top.
+    const rect = body.getBoundingClientRect();
+    const originX = anchor ? anchor.x - rect.left : body.clientWidth / 2;
+    const originY = anchor ? anchor.y - rect.top : body.clientHeight / 2;
+    const ratioX = (body.scrollLeft + originX) / body.scrollWidth;
+    const ratioY = (body.scrollTop + originY) / body.scrollHeight;
     zoom.textContent = `${value}%`;
     pageImages.forEach(image => { image.style.width = `${value}%`; });
-    const wasZoomed = body.classList.contains('zoomed');
     body.classList.toggle('zoomed', value > 100);
-    if (value > 100 && !wasZoomed) body.scrollLeft = (body.scrollWidth - body.clientWidth) / 2;
+    body.scrollLeft = ratioX * body.scrollWidth - originX;
+    body.scrollTop = ratioY * body.scrollHeight - originY;
   };
   zoom.addEventListener('click', () => {
     zoom.textContent = '100%';
     pageImages.forEach(image => { image.style.width = '100%'; });
     body.classList.remove('zoomed');
+    body.scrollTop = 0; body.scrollLeft = 0;
   });
   body.addEventListener('wheel', event => {
     if (!event.ctrlKey && !event.metaKey) return;
     event.preventDefault();
-    setZoom(event.deltaY < 0 ? 4 : -4);
+    setZoom(event.deltaY < 0 ? 4 : -4, { x: event.clientX, y: event.clientY });
   }, { passive: false });
   enableExpandOnDoubleClick(body, panel);
   enablePanning(body);
