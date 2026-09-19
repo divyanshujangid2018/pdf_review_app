@@ -1,6 +1,7 @@
 import csv
 import io
 import re
+import sys
 from datetime import date
 from pathlib import Path
 from typing import Optional
@@ -14,7 +15,9 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-BASE_DIR = Path(__file__).parent
+# When frozen into a standalone app (PyInstaller), bundled data lives under
+# sys._MEIPASS instead of next to this source file.
+BASE_DIR = Path(getattr(sys, "_MEIPASS", None) or Path(__file__).parent)
 STATIC_DIR = BASE_DIR / "static"
 MAX_FILE_SIZE = 500 * 1024 * 1024
 PREVIEW_ROW_LIMIT = 5000
