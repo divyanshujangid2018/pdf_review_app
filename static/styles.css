@@ -26,7 +26,7 @@ select { padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; ba
 #fileInput { display: none; }
 #dropzone { position: relative; display: flex; flex: 1; min-height: 0; overflow: hidden; }
 #panels:not([hidden]) { display: flex; flex: 1; flex-direction: row; align-items: stretch; gap: 5px; padding: 0 4px; min-width: 0; min-height: 0; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; scroll-behavior: smooth; overscroll-behavior-x: contain; }
-#panels:not([hidden]) > .panel, #panels:not([hidden]) > .folder-group, #panels:not([hidden]) > .user-group { scroll-snap-align: center; }
+#panels:not([hidden]) > .panel, #panels:not([hidden]) > .folder-group { scroll-snap-align: center; }
 #dropzone.drag-over::after { content: "Drop PDFs to add them"; position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; border: 2px dashed var(--accent); background: rgb(231 237 233 / 88%); color: var(--accent); font: 600 17px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; pointer-events: none; }
 .empty-state { max-width: 390px; margin: auto; padding: 24px; text-align: center; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--muted); }
 .empty-mark { color: var(--accent); font: 700 14px Georgia, serif; letter-spacing: 3px; }
@@ -34,19 +34,6 @@ select { padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; ba
 .empty-state p { margin: 0 0 18px; font-size: 13px; line-height: 1.55; }
 .folder-group { display: flex; flex: 0 0 clamp(360px, calc(33.333vw - 14px), 620px); width: clamp(360px, calc(33.333vw - 14px), 620px); min-width: 360px; min-height: 100%; flex-direction: column; gap: 0; border-right: 1px solid var(--line); background: var(--paper); }
 .folder-group:first-child { border-left: 1px solid var(--line); }
-
-/* A user-group is one uploaded ZIP (one person's data): a fixed-width column
-   in the horizontal #panels row, holding that user's app-folders stacked and
-   scrolling vertically inside it. Scrolling between users stays horizontal
-   (native #panels behavior); scrolling within a user's own apps is vertical. */
-.user-group { display: flex; flex: 0 0 clamp(340px, calc(33.333vw - 14px), 620px); width: clamp(340px, calc(33.333vw - 14px), 620px); min-width: 340px; min-height: 100%; flex-direction: column; gap: 0; border-right: 1px solid var(--line); background: var(--paper); }
-.user-group:first-child { border-left: 1px solid var(--line); }
-.user-header { position: sticky; top: 0; z-index: 3; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-height: 54px; padding: 17px 18px 12px; border-bottom: 1px solid var(--line); background: var(--accent-soft); color: var(--ink); font: 600 18px Georgia, serif; }
-.user-header strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.user-header span { flex: 0 0 auto; opacity: .76; font-size: 11px; }
-.user-folders { display: flex; min-height: 0; flex: 1; flex-direction: column; align-items: stretch; gap: 0; overflow-x: hidden; overflow-y: auto; scroll-snap-type: y proximity; scroll-behavior: smooth; }
-.user-folders > .folder-group { scroll-snap-align: start; flex: 1 1 min(560px, 62vh); width: 100%; min-width: 0; min-height: 0; border-right: 0; border-bottom: 1px solid var(--line); }
-.user-folders > .folder-group:first-child { border-left: 0; border-top: 0; }
 .folder-header { position: sticky; top: 0; z-index: 2; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-height: 54px; padding: 17px 18px 12px; border-bottom: 1px solid var(--line); background: var(--paper); color: var(--ink); font: 600 18px Georgia, serif; }
 .folder-header span { opacity: .76; font-size: 11px; }
 .folder-header strong { cursor: zoom-in; }
@@ -114,7 +101,6 @@ select { padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; ba
   .actions button, .actions select { padding: 7px 9px; }
   .panel { min-width: 88vw; height: calc(100% - 2px); }
   .folder-group { flex-basis: 88vw; min-width: 88vw; }
-  .user-group { flex-basis: 88vw; min-width: 88vw; }
   .panel + .panel { border-left-width: 3px; }
   .panel-header { gap: 3px; padding: 6px; }
   .panel-meta { display: none; }

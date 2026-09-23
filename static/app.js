@@ -144,7 +144,7 @@ function enablePanning(body) {
 }
 function centerEdges(container, axis) {
   if (!container) return;
-  const items = [...container.querySelectorAll(':scope > .panel, :scope > .folder-group, :scope > .user-group')];
+  const items = [...container.querySelectorAll(':scope > .panel, :scope > .folder-group')];
   const basePad = axis === 'x' ? 4 : 12;
   if (!items.length) {
     if (axis === 'x') { container.style.paddingLeft = `${basePad}px`; container.style.paddingRight = `${basePad}px`; }
@@ -179,7 +179,6 @@ function addNextFileButton(doc, body) {
 function recalcCentering() {
   centerEdges(panels, 'x');
   document.querySelectorAll('.folder-files').forEach(el => centerEdges(el, 'y'));
-  document.querySelectorAll('.user-folders').forEach(el => centerEdges(el, 'y'));
   if (!folderFocusEl.hidden) centerEdges(folderFocusFiles, 'x');
 }
 function renderDoc(doc, target = panels) {
@@ -285,7 +284,7 @@ function setFolderReview(folderName, correctBtn, wrongBtn, clicked) {
   correctBtn.classList.toggle('active', value === 'correct');
   wrongBtn.classList.toggle('active', value === 'wrong');
 }
-function renderFolder(folder, target = panels) {
+function renderFolder(folder) {
   const group = document.createElement('section'); group.className = 'folder-group';
   const heading = document.createElement('header'); heading.className = 'folder-header';
   const folderName = document.createElement('strong'); folderName.textContent = folder.name;
@@ -318,10 +317,10 @@ function renderFolder(folder, target = panels) {
   right.append(folderCount, syncLabel, fullscreenButton);
   heading.append(left, right);
   const files = document.createElement('div'); files.className = 'folder-files';
-  group.append(heading, files); target.append(group);
+  group.append(heading, files); panels.append(group);
   folder.documents.forEach(doc => renderDoc(doc, files));
 }
-function renderArchiveFolders(folders, target = panels) {
+function renderArchiveFolders(folders) {
   const appOrder = ['artifacts', 'capital_one_cards', 'cash_app_p2p', 'experian', 'irs_gov', 'navy_federal_cu', 'rocket_mortgage'];
   folders
     .sort((left, right) => {
@@ -329,24 +328,7 @@ function renderArchiveFolders(folders, target = panels) {
       const rightIndex = appOrder.indexOf(right.name);
       return (leftIndex < 0 ? appOrder.length : leftIndex) - (rightIndex < 0 ? appOrder.length : rightIndex);
     })
-    .forEach(folder => renderFolder(folder, target));
-}
-// One uploaded ZIP = one user. Their app-folders stack and scroll vertically
-// inside this column; #panels lays these user columns out horizontally, so
-// scrolling between users stays the normal left/right panels behavior.
-function renderUserGroup(label, folders) {
-  const group = document.createElement('section'); group.className = 'user-group';
-  const header = document.createElement('header'); header.className = 'user-header';
-  const title = document.createElement('strong'); title.textContent = label; title.title = label;
-  const totalDocs = folders.reduce((sum, folder) => sum + folder.documents.length, 0);
-  const meta = document.createElement('span');
-  meta.textContent = `${folders.length} app${folders.length === 1 ? '' : 's'} · ${totalDocs} file${totalDocs === 1 ? '' : 's'}`;
-  header.append(title, meta);
-  const foldersContainer = document.createElement('div'); foldersContainer.className = 'user-folders';
-  group.append(header, foldersContainer);
-  panels.append(group);
-  renderArchiveFolders(folders, foldersContainer);
-  return group;
+    .forEach(renderFolder);
 }
 async function renderSpreadsheet(doc, body) {
   const response = await fetch(`/api/documents/${doc.id}/preview`);
@@ -435,8 +417,7 @@ async function uploadFiles(fileList) {
       const archiveForm = new FormData(); archiveForm.append('file', file);
       const archiveResponse = await fetch('/api/archive', { method: 'POST', body: archiveForm });
       if (!archiveResponse.ok) { notify((await archiveResponse.json()).detail || 'ZIP upload failed'); continue; }
-      const archive = await archiveResponse.json();
-      renderUserGroup(file.name.replace(/\.zip$/i, ''), archive.folders);
+      const archive = await archiveResponse.json(); renderArchiveFolders(archive.folders);
       archive.folders.forEach(folder => folder.documents.forEach(doc => state.docs.push(doc)));
       state.zipNames.push(file.name);
       continue;
